@@ -1,6 +1,8 @@
 package com.example.nyt;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,32 +28,69 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> titles = new ArrayList<>();
+    ArrayList<String> urls = new ArrayList<>();
     ArrayAdapter arrayAdapter;
     ListView listView;
     SQLiteDatabase sqLiteDatabase;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        listView = (ListView) findViewById(R.id.listView);
+        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, titles);
+        listView.setAdapter(arrayAdapter);
+
 
         sqLiteDatabase = this.openOrCreateDatabase("NewsArticles", MODE_PRIVATE, null);
-        sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS ARTICLES(URL VARCHAR, TITLE VARCHAR, ID INTEGER PRIMARY KEY)");
+        sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS ARTICLES(ID INTEGER PRIMARY KEY, URL VARCHAR UNIQUE, TITLE VARCHAR)");
+
+        updateListView();
+
 
 
 
         downLoadTask task = new downLoadTask();
 
         try{
-            task.execute("https://newsapi.org/v2/top-headlines?country=us&apiKey=4ec56298d9124daab0f81ece9eb232da");
+//            task.execute("https://newsapi.org/v2/top-headlines?country=us&apiKey=4ec56298d9124daab0f81ece9eb232da");
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        listView = (ListView) findViewById(R.id.listView);
+
 
     }
+
+
+
+
+
+    public void updateListView(){
+
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT * FROM ARTICLES", null);
+
+        int titleIndex = cursor.getColumnIndex("TITLE");
+        int urlIndex = cursor.getColumnIndex("URL");
+
+        if (cursor.moveToFirst()){
+            titles.clear();
+            urls.clear();
+        }
+
+        while (cursor.moveToNext()){
+            titles.add(cursor.getString(titleIndex));
+            urls.add(cursor.getString(urlIndex));
+        }
+
+        arrayAdapter.notifyDataSetChanged();
+
+    }
+
+
+
 
     public class downLoadTask extends AsyncTask<String, Void, String>{
 
@@ -138,17 +177,35 @@ public class MainActivity extends AppCompatActivity {
 
 //                Log.i("JSON ARRAY", jsonArray.toString());
 
+
+
+                sqLiteDatabase.execSQL("DELETE FROM ARTICLES");
+
+
                 for(int i=0; i<jsonArray.length(); i++){
                     JSONObject jsonOfArticles = jsonArray.getJSONObject(i);
                     url = jsonOfArticles.getString("url");
                     title = jsonOfArticles.getString("title");
 //                    sqLiteDatabase.execSQL("INSERT OR IGNORE INTO ARTICLES (URL, TITLE) VALUES ('" + url + "', '" + title + "')");
+                    String sql = "INSERT OR IGNORE INTO ARTICLES (URL, TITLE) VALUES (?, ?)";
+
+                    SQLiteStatement statement = sqLiteDatabase.compileStatement(sql);
+
+                    statement.bindString(1, url);
+                    statement.bindString(2, title);
+
+                    statement.execute();
+
                 }
+
+                updateListView();
 
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+
+
         }
     }
 

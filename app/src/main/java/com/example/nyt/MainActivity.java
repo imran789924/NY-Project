@@ -1,5 +1,6 @@
 package com.example.nyt;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
@@ -7,8 +8,11 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -40,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         listView = (ListView) findViewById(R.id.listView);
-        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, titles);
+        arrayAdapter = new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1, titles);
         listView.setAdapter(arrayAdapter);
 
 
@@ -55,11 +60,51 @@ public class MainActivity extends AppCompatActivity {
         downLoadTask task = new downLoadTask();
 
         try{
-//            task.execute("https://newsapi.org/v2/top-headlines?country=us&apiKey=4ec56298d9124daab0f81ece9eb232da");
+            task.execute("https://newsapi.org/v2/top-headlines?country=us&apiKey=4ec56298d9124daab0f81ece9eb232da");
         }catch (Exception e){
             e.printStackTrace();
         }
 
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+//                String content = "";
+//                Log.i("WebViewStart", content);
+//                try {
+//                    HttpURLConnection httpURLConnection = null;
+//                    URL url = new URL(urls.get(position));
+//                    httpURLConnection = (HttpURLConnection) url.openConnection();
+//                    InputStream inputStream = httpURLConnection.getInputStream();
+//                    Log.i("WebView1", content);
+//
+//
+////                    InputStream inputStream = url.openStream();
+//
+//                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+//
+//                    String line = bufferedReader.readLine();
+//
+//                    while (line != null){
+//                        content += line;
+//                        line = bufferedReader.readLine();
+//                    }
+//
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//                Log.i("WebView2", content);
+//                Toast.makeText(MainActivity.this, content, Toast.LENGTH_LONG).show();
+//                System.out.println(content);
+
+
+                Intent intent = new Intent(MainActivity.this, WebActivity.class);
+                intent.putExtra("url", urls.get(position));
+                startActivity(intent);
+            }
+        });
 
 
     }
